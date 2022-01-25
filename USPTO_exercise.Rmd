@@ -5,6 +5,8 @@ date: "1/25/2022"
 output: html_document
 ---
 
+##### 0. DATA PREPROCESSING #####
+
 ```{r}
 library(tidyverse)
 library(lubridate)
@@ -35,8 +37,6 @@ examiner_ids %>% tbl_vars()
 app_data_sample %>% tbl_vars()
 ```
 
-##### DATA CLEANING #####
-
 ```{r}
 # Format dates
 examiner_gs$start_date = as.Date(examiner_gs$start_date, tryFormats = c("%m/%d/%y", "%m/%d/%Y"))
@@ -44,6 +44,7 @@ examiner_gs$end_date = as.Date(examiner_gs$end_date, tryFormats = c("%m/%d/%y", 
 ```
 
 ##### 1. FEATURE ENGINEERING - CREATING INDIVIDUAL-LEVEL VARIABLES #####
+
 ```{r}
 # Split examiner's name into first name and last name
 examiners <- examiner_gs %>% 
@@ -109,6 +110,7 @@ examiner_profile <- select(examiner_profile,-c("examiner_name"))
 ```
 
 ##### 2. FEATURE ENGINEERING - CREATING PANEL DATASET OF QUARTERLY AGGREGATED PRODUCTION MEASURES FOR EACH EXAMINER #####
+
 ```{r}
 ## Generate list of applications
 # Create a new column for Year & Quarter
@@ -125,6 +127,39 @@ temp <- ddply(applications, .(examiner_id), nrow)
 names(temp) <- c("examiner_id","n_applications")
 examiner_profile <- left_join(examiner_profile, temp, by=c("patex_id"="examiner_id"), match="first")
 ```
+
+```{r}
+library(plyr)
+temp <- ddply(filter(applications, !startsWith(application_number,"90"), !startsWith(application_number,"95"), !startsWith(application_number,"96"))
+              , .(examiner_id), nrow)
+names(temp) <- c("examiner_id","n_new_applications")
+examiner_profile <- left_join(examiner_profile, temp, by=c("patex_id"="examiner_id"), match="first")
+```
+
+
+```{r}
+# Get number of abandoned applications
+library(plyr)
+temp <- ddply(filter(applications, disposal_type == "ABN"), .(examiner_id), nrow)
+names(temp) <- c("examiner_id","n_ABN_applications")
+examiner_profile <- left_join(examiner_profile, temp, by=c("patex_id"="examiner_id"), match="first")
+```
+
+```{r}
+# Get number of allowed applications
+library(plyr)
+temp <- ddply(filter(applications, disposal_type == "ISS"), .(examiner_id), nrow)
+names(temp) <- c("examiner_id","n_ISS_applications")
+examiner_profile <- left_join(examiner_profile, temp, by=c("patex_id"="examiner_id"), match="first")
+```
+
+```{r}
+library(plyr)
+temp <- ddply(filter(applications, disposal_type == "PEND"), .(examiner_id), nrow)
+names(temp) <- c("examiner_id","n_PEND_applications")
+examiner_profile <- left_join(examiner_profile, temp, by=c("patex_id"="examiner_id"), match="first")
+```
+
 
 ```{r}
 # Get current art unit
@@ -205,5 +240,142 @@ examiner_profile <- examiner_profile %>%
 write.csv(applications,"output_applications.csv")
 write.csv(examiner_profile,"output_examiner_profile.csv")
 write.csv(art_unit,"output_art_unit.csv")
+```
+
+##### 4. EXPLORING REGRESSION #####
+
+```{r}
+### Count null values
+df = examiner_profile
+summary(df)
+table(is.na(df))
+attach(df)
+```
+
+Many null values due to type of dataset (2.6%)
+Can't really drop them so I will replace them with mean to make
+
+```{r}
+### Find all columns with missing values
+test_df = df[,c("n_applications","n_new_applications", 
+"n_ABN_applications", "n_ISS_applications",
+"n_PEND_applications")]
+
+list_na <- colnames(test_df)[ apply(test_df, 2, anyNA) ]
+```
+
+```{r}
+### Find column means
+average_missing <- apply(test_df[,colnames(test_df) %in% list_na],
+                         2,
+                         mean,
+                         na.rm =  TRUE)
+average_missing
+```
+
+```{r}
+# Replace missing values with mean value
+library(dplyr)
+df_replace <- df %>%
+  mutate(replace_mean_na  = ifelse(is.na(n_applications), average_missing[1], n_applications),
+         replace_mean_nn = ifelse(is.na(n_new_applications), average_missing[2], n_new_applications),
+         replace_mean_n_AB = ifelse(is.na(n_ABN_applications), average_missing[3], n_ABN_applications),
+         replace_mean_n_ISS = ifelse(is.na(n_ISS_applications), average_missing[4], n_ISS_applications),
+         replace_mean_n_PEND = ifelse(is.na(n_PEND_applications), average_missing[5], n_PEND_applications))
+
+sum(is.na(df_replace$replace_mean_na))
+sum(is.na(df_replace$replace_mean_nn))
+sum(is.na(df_replace$replace_mean_n_AB))
+sum(is.na(df_replace$replace_mean_n_ISS))
+sum(is.na(df_replace$replace_mean_n_PEND))
+
+View(df_replace)
+```
+
+```{r}
+# Dummify categorical variables
+library(fastDummies)
+df_replace = dummy_cols(df_replace,select_columns = 'race')
+df_replace = dummy_cols(df_replace,select_columns = 'gender')
+```
+
+Now that all variables are cleaned and ready
+We can now start testing
+Before we get to that, lets adaboost
+
+```{r}
+library(randomForest)
+library(gbm) 
+set.seed (1)
+attach(df_replace)
+boosted=gbm(tenure~min_grade+max_grade+qtr+replace_mean_na+replace_mean_nn+replace_mean_n_AB
+            +replace_mean_n_ISS+replace_mean_n_PEND+race_asi+race_bla+race_his
+            +race_oth+race_whi+gender_male+gender_female,data=df_replace,distribution= "gaussian",n.trees=10000, interaction.depth=4)
+summary(boosted)
+```
+
+This model displayed that qtr is highly influential so I am cutting it
+
+```{r}
+boosted=gbm(tenure~min_grade+max_grade+replace_mean_na+replace_mean_nn+replace_mean_n_AB
+            +replace_mean_n_ISS+replace_mean_n_PEND+race_asi+race_bla+race_his
+            +race_oth+race_whi+gender_male+gender_female,data=df_replace,distribution= "gaussian",n.trees=10000, interaction.depth=4)
+summary(boosted)
+```
+
+This model indicated that the only important variables were min_grade and max_grade so I am cutting those as well
+
+```{r}
+boosted=gbm(tenure~replace_mean_na+replace_mean_nn+replace_mean_n_AB
+            +replace_mean_n_ISS+replace_mean_n_PEND+race_asi+race_bla+race_his
+            +race_oth+race_whi+gender_male+gender_female,data=df_replace,distribution= "gaussian",n.trees=10000, interaction.depth=4)
+summary(boosted)
+```
+
+All values replaced with their respective means had significant influence
+Now on to building Linear model
+
+```{r}
+lr.fit= lm(tenure~max_grade+min_grade+gender_male+gender_female+race_whi+replace_mean_na+replace_mean_n_AB
+           +replace_mean_n_ISS+replace_mean_n_PEND,data = df_replace)
+summary(lr.fit)
+```
+
+```{r}
+sm<-summary(lr.fit)
+mse <- function(sm) 
+mean(sm$residuals^2)
+```
+MSE=28.45
+This model is terrible but improves if we insert min_grade and max_grade (from MSE = 50.92 to 28.45)
+
+```{r}
+### Plotting some of the data
+library(car)
+residualPlots(lr.fit)
+
+qqPlot(lr.fit)
+```
+
+To estimate turnover, I borrowed an equation from the American Staffing Association
+If we table quarters, we can estimate how many employees were at the company for each
+quarter. If we sum this by year and then we divide this number by 4 for number of quarters in a year
+we get average employment. If we sum tenure for all employees of that year and then divide
+that by average employment, we can develop an estimate for turnover
+
+```{r}
+### Calculate total amount by quarter
+df_replace$qtr <- as.character(df_replace$qtr)
+
+df_replace$count <- as.numeric(ave(df_replace$qtr, df_replace$qtr, FUN = length))
+df_replace
+```
+
+```{r}
+### Calculate total tenure by quarter
+ag = aggregate(df_replace$tenure, by=list(df_replace$qtr), FUN=sum)
+
+df_replace %>% group_by(qtr) %>% summarise(max_val = max(tenure),
+                                    max_date = qtr[which.max(tenure)])
 ```
 
