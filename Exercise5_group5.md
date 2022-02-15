@@ -860,6 +860,22 @@ summary(logit)
     ## Number of Fisher Scoring iterations: 5
 
 ``` r
+library(ggplot2)
+plot=ggplot(New_df, aes(x=tenure,y=t2_state))+geom_point()
+line=geom_smooth(method="glm", formula=t2_state~gender_male+tenure_t2, method.args=list(family=binomial))
+plot+line
+```
+
+    ## Warning: Removed 23 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Computation failed in `stat_smooth()`:
+    ## variable lengths differ (found for '(weights)')
+
+    ## Warning: Removed 23 rows containing missing values (geom_point).
+
+![](Exercise5_group5_files/figure-markdown_github/unnamed-chunk-23-1.png)
+
+``` r
 # Predictions for male and female attrition
 b0=coef(logit)[1]
 b1=coef(logit)[2]
@@ -885,9 +901,48 @@ b2
     ## -0.1463734
 
 ``` r
+sex = 0 # female
+ten = 1 # One year
+m=exp(b0+b1*sex+b2*ten)
+prob = m/(1+m)
+prob
+```
+
+    ## (Intercept) 
+    ##   0.2516829
+
+<span style="color:blue">24.7% Chance this junior woman quits.</span>
+
+``` r
+sex = 1 # male
+ten = 1 # One year
+m=exp(b0+b1*sex+b2*ten)
+prob = m/(1+m)
+prob
+```
+
+    ## (Intercept) 
+    ##   0.2736789
+
+<span style="color:blue">27.5% Chance this junior man quits.</span>
+
+``` r
+sex = 0 # Female
+ten = 10 # Ten years
+m=exp(b0+b1*sex+b2*ten)
+prob = m/(1+m)
+prob
+```
+
+    ## (Intercept) 
+    ##  0.08263911
+
+<span style="color:blue">8.1% Chance this senior woman quits.</span>
+
+``` r
 sex = 1 # Male
 ten = 10 # Ten years
-m=exp(b0+b1*1+b2*10)
+m=exp(b0+b1*sex+b2*ten)
 prob = m/(1+m)
 prob
 ```
@@ -895,17 +950,64 @@ prob
     ## (Intercept) 
     ##  0.09167127
 
-<span style="color:blue">8% Chance this guy quits.</span>
+<span style="color:blue">9.2% chance this senior man will quit.</span>
+
+<span style="color:blue">Appendix: more exploratory work</span>
 
 ``` r
-sex = 0 # female
-ten = 2 # Two years
-m=exp(b0+b1*0+b2*2)
-prob = m/(1+m)
-prob
+#library('fastDummies')
+#New_df <- dummy_cols(New_df, select_columns ='t1_state')
+#attach(New_df)
 ```
 
-    ## (Intercept) 
-    ##   0.2251277
+``` r
+# Second Dirty Model
+#search()
+#logit2=glm(t2_state ~ gender_male+tenure_t2+t1_state_Junior+t1_state_Senior, family = "binomial",data = New_df) 
+#summary(logit2)
+```
 
-<span style="color:blue">22% chance she will quit.</span>
+``` r
+# Predictions for male and female attrition
+#b0=coef(logit2)[1]
+#b1=coef(logit2)[2]
+#b2=coef(logit2)[3]
+#b3=coef(logit2)[4]
+#b4=coef(logit2)[5]
+```
+
+``` r
+#sex = 1 # Male
+#ten = 10 # Ten years
+# Senior at t1
+#m=exp(b0+b1*sex+b2*ten+b4*1)
+#prob = m/(1+m)
+#prob
+```
+
+``` r
+#sex = 1 # Male
+#ten = 1 # One year
+# Junior at t1
+#m=exp(b0+b1*sex+b2*ten+b3*1)
+#prob = m/(1+m)
+#prob
+```
+
+``` r
+#sex = 0 # Female
+#ten = 10 # Ten years
+# Senior at t1
+#m=exp(b0+b1*sex+b2*ten+b4*1)
+#prob = m/(1+m)
+#prob
+```
+
+``` r
+#sex = 0 # Female
+#ten = 1 # One year
+# Junior at t1
+#m=exp(b0+b1*sex+b2*ten+b3*1)
+#prob = m/(1+m)
+#prob
+```
