@@ -174,7 +174,7 @@ transitions_seniority <- as.data.frame(select(transitions,c("patex_id","t0_state
 names(transitions_seniority) <- c("patex_id","t0","t1","t2")
 rownames(transitions_seniority) <- transitions_seniority$patex_id
 transitions_seniority <- select(transitions_seniority,-c("patex_id"))
-transitions_seniority
+head(transitions_seniority,10)
 ```
 
 
@@ -223,7 +223,7 @@ transitions_seniority_women <- as.data.frame(select(transitions_seniority_women,
 names(transitions_seniority_women) <- c("patex_id","t0","t1","t2")
 rownames(transitions_seniority_women) <- transitions_seniority_women$patex_id
 transitions_seniority_women <- select(transitions_seniority_women,-c("patex_id"))
-transitions_seniority_women
+head(transitions_seniority_women,10)
 
 # Create transition matrix (for t0 to t1, women)
 trans_matrix_table <- trans.matrix(as.matrix(transitions_seniority_women[,c(1,2)]))
@@ -243,7 +243,7 @@ transitions_seniority_men <- as.data.frame(select(transitions_seniority_men,c("p
 names(transitions_seniority_men) <- c("patex_id","t0","t1","t2")
 rownames(transitions_seniority_men) <- transitions_seniority_men$patex_id
 transitions_seniority_men <- select(transitions_seniority_men,-c("patex_id"))
-transitions_seniority_men
+head(transitions_seniority_men,10)
 
 # Create transition matrix (for t0 to t1, women)
 trans_matrix_table <- trans.matrix(as.matrix(transitions_seniority_men[,c(1,2)]))
