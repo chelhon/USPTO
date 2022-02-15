@@ -661,7 +661,7 @@ summary_men
 ``` r
 # Collect Data for gender from Applications Dataset
 Test_df = applications[ , c('patex_id', 'gender')]
-View(Test_df)
+#View(Test_df)
 
 # Find only distinct values
 Test_df = (distinct(Test_df))
@@ -671,7 +671,7 @@ Test_df = (distinct(Test_df))
 
 # merge two data frames by ID
 New_df <- merge(transitions,Test_df,by="patex_id")
-View(New_df)
+#View(New_df)
 
 # Count null values
 skim(New_df)
@@ -754,3 +754,158 @@ New_df<-New_df[New_df$t2_state!="New hire",]
 <span style="color:blue">Creating an quadratic discriminat
 regression</span> <span style="color:blue">We only have three values in
 t2_state. Junior, Senior and Exit.</span>
+
+``` r
+library('fastDummies')
+New_df <- dummy_cols(New_df, select_columns = 'gender')
+attach(New_df)
+```
+
+    ## The following objects are masked from New_df (pos = 4):
+    ## 
+    ##     exit_date, gender, onboard_date, patex_id, t0_state, t1_state,
+    ##     t2_state, tenure, tenure_t0, tenure_t1, tenure_t2, woman
+
+``` r
+library(MASS)
+```
+
+    ## 
+    ## Attaching package: 'MASS'
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     select
+
+``` r
+#myqda = qda(t2_state~gender_male+tenure_t2+tenure_t1+tenure_t0)
+```
+
+<span style="color:blue">Creating an quadratic discriminat
+regression.</span>
+
+``` r
+# Creating a numerical variable for attrition 
+New_df$t2_state[New_df$t2_state=="Exit"]=1
+New_df$t2_state[New_df$t2_state=="Junior"]=0
+New_df$t2_state[New_df$t2_state=="Senior"]=0
+
+
+New_df <- transform(New_df,t2_state = as.factor(as.numeric(New_df$t2_state)))
+attach(New_df)
+```
+
+    ## The following objects are masked from New_df (pos = 4):
+    ## 
+    ##     exit_date, gender, gender_female, gender_male, onboard_date,
+    ##     patex_id, t0_state, t1_state, t2_state, tenure, tenure_t0,
+    ##     tenure_t1, tenure_t2, woman
+
+    ## The following objects are masked from New_df (pos = 6):
+    ## 
+    ##     exit_date, gender, onboard_date, patex_id, t0_state, t1_state,
+    ##     t2_state, tenure, tenure_t0, tenure_t1, tenure_t2, woman
+
+``` r
+table(New_df$t2_state)
+```
+
+    ## 
+    ##    0    1 
+    ## 4310  355
+
+``` r
+# First Dirty Model
+search()
+```
+
+    ##  [1] ".GlobalEnv"          "New_df"              "package:MASS"       
+    ##  [4] "New_df"              "package:fastDummies" "New_df"             
+    ##  [7] "package:gender"      "package:arrow"       "package:lubridate"  
+    ## [10] "package:skimr"       "package:forcats"     "package:stringr"    
+    ## [13] "package:dplyr"       "package:purrr"       "package:readr"      
+    ## [16] "package:tidyr"       "package:tibble"      "package:ggplot2"    
+    ## [19] "package:tidyverse"   "package:stats"       "package:graphics"   
+    ## [22] "package:grDevices"   "package:utils"       "package:datasets"   
+    ## [25] "package:methods"     "Autoloads"           "package:base"
+
+``` r
+logit=glm(t2_state ~ gender_male+tenure_t2, family = "binomial",data = New_df) 
+summary(logit)
+```
+
+    ## 
+    ## Call:
+    ## glm(formula = t2_state ~ gender_male + tenure_t2, family = "binomial", 
+    ##     data = New_df)
+    ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -0.6592  -0.4268  -0.3381  -0.3082   2.5220  
+    ## 
+    ## Coefficients:
+    ##             Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept) -0.94328    0.19457  -4.848 1.25e-06 ***
+    ## gender_male  0.11362    0.12307   0.923    0.356    
+    ## tenure_t2   -0.14637    0.01546  -9.470  < 2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 2511.0  on 4664  degrees of freedom
+    ## Residual deviance: 2422.7  on 4662  degrees of freedom
+    ## AIC: 2428.7
+    ## 
+    ## Number of Fisher Scoring iterations: 5
+
+``` r
+# Predictions for male and female attrition
+b0=coef(logit)[1]
+b1=coef(logit)[2]
+b2=coef(logit)[3]
+b0
+```
+
+    ## (Intercept) 
+    ##  -0.9432836
+
+``` r
+b1
+```
+
+    ## gender_male 
+    ##   0.1136206
+
+``` r
+b2
+```
+
+    ##  tenure_t2 
+    ## -0.1463734
+
+``` r
+sex = 1 # Male
+ten = 10 # Ten years
+m=exp(b0+b1*1+b2*10)
+prob = m/(1+m)
+prob
+```
+
+    ## (Intercept) 
+    ##  0.09167127
+
+<span style="color:blue">8% Chance this guy quits.</span>
+
+``` r
+sex = 0 # female
+ten = 2 # Two years
+m=exp(b0+b1*0+b2*2)
+prob = m/(1+m)
+prob
+```
+
+    ## (Intercept) 
+    ##   0.2251277
+
+<span style="color:blue">22% chance she will quit.</span>
