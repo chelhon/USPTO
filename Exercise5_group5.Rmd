@@ -3,8 +3,8 @@ title: "Exercise5_group5"
 author: "Chelsea, Matthew"
 date: "2/14/2022"
 output:
-  html_document: default
-  pdf_document: default
+  md_document:
+    variant: markdown_github
 ---
 
 ```{r setup, include=FALSE}
