@@ -9,7 +9,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Chelsea" />
+<meta name="author" content="Chelsea, Matthew" />
 
 
 <title>Exercise5_group5</title>
@@ -165,7 +165,7 @@ pre code {
 
 
 <h1 class="title toc-ignore">Exercise5_group5</h1>
-<h4 class="author">Chelsea</h4>
+<h4 class="author">Chelsea, Matthew</h4>
 <h4 class="date">2/14/2022</h4>
 
 </div>
@@ -883,6 +883,291 @@ summary_men</code></pre>
 ## Junior      384   98.5728      163   -0.3952589
 ## Senior     2015 2121.3180     2425   -0.1252297
 ## Exit        266  445.1092      231    0.9268797</code></pre>
+</div>
+<div id="regression-to-predict-attrition" class="section level2">
+<h2>Regression to predict attrition</h2>
+<pre class="r"><code># Collect Data for gender from Applications Dataset
+Test_df = applications[ , c(&#39;patex_id&#39;, &#39;gender&#39;)]
+View(Test_df)
+
+# Find only distinct values
+Test_df = (distinct(Test_df))
+
+# 5,649 values. Equal to the transitions dataset
+# Merge dataset to transitions dataset
+
+# merge two data frames by ID
+New_df &lt;- merge(transitions,Test_df,by=&quot;patex_id&quot;)
+View(New_df)
+
+# Count null values
+skim(New_df)</code></pre>
+<table>
+<caption>Data summary</caption>
+<tbody>
+<tr class="odd">
+<td align="left">Name</td>
+<td align="left">New_df</td>
+</tr>
+<tr class="even">
+<td align="left">Number of rows</td>
+<td align="left">5649</td>
+</tr>
+<tr class="odd">
+<td align="left">Number of columns</td>
+<td align="left">12</td>
+</tr>
+<tr class="even">
+<td align="left">_______________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Column type frequency:</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">character</td>
+<td align="left">4</td>
+</tr>
+<tr class="odd">
+<td align="left">Date</td>
+<td align="left">2</td>
+</tr>
+<tr class="even">
+<td align="left">numeric</td>
+<td align="left">6</td>
+</tr>
+<tr class="odd">
+<td align="left">________________________</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">Group variables</td>
+<td align="left">None</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: character</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">min</th>
+<th align="right">max</th>
+<th align="right">empty</th>
+<th align="right">n_unique</th>
+<th align="right">whitespace</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">t0_state</td>
+<td align="right">1250</td>
+<td align="right">0.78</td>
+<td align="right">6</td>
+<td align="right">6</td>
+<td align="right">0</td>
+<td align="right">2</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">t1_state</td>
+<td align="right">599</td>
+<td align="right">0.89</td>
+<td align="right">4</td>
+<td align="right">8</td>
+<td align="right">0</td>
+<td align="right">4</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">t2_state</td>
+<td align="right">460</td>
+<td align="right">0.92</td>
+<td align="right">4</td>
+<td align="right">8</td>
+<td align="right">0</td>
+<td align="right">4</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">gender</td>
+<td align="right">663</td>
+<td align="right">0.88</td>
+<td align="right">4</td>
+<td align="right">6</td>
+<td align="right">0</td>
+<td align="right">2</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: Date</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="left">min</th>
+<th align="left">max</th>
+<th align="left">median</th>
+<th align="right">n_unique</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">onboard_date</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="left">2000-01-02</td>
+<td align="left">2016-03-03</td>
+<td align="left">2003-01-21</td>
+<td align="right">2325</td>
+</tr>
+<tr class="even">
+<td align="left">exit_date</td>
+<td align="right">4738</td>
+<td align="right">0.16</td>
+<td align="left">2000-09-14</td>
+<td align="left">2015-09-02</td>
+<td align="left">2011-11-20</td>
+<td align="right">645</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: numeric</strong></p>
+<table>
+<colgroup>
+<col width="13%" />
+<col width="9%" />
+<col width="13%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="5%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">mean</th>
+<th align="right">sd</th>
+<th align="right">p0</th>
+<th align="right">p25</th>
+<th align="right">p50</th>
+<th align="right">p75</th>
+<th align="right">p100</th>
+<th align="left">hist</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">patex_id</td>
+<td align="right">1</td>
+<td align="right">1.00</td>
+<td align="right">78752.86</td>
+<td align="right">13575.30</td>
+<td align="right">59012.00</td>
+<td align="right">66531.75</td>
+<td align="right">75346.00</td>
+<td align="right">93750.75</td>
+<td align="right">99990.00</td>
+<td align="left">▇▆▃▂▇</td>
+</tr>
+<tr class="even">
+<td align="left">tenure</td>
+<td align="right">24</td>
+<td align="right">1.00</td>
+<td align="right">12.13</td>
+<td align="right">4.92</td>
+<td align="right">0.07</td>
+<td align="right">8.48</td>
+<td align="right">13.45</td>
+<td align="right">16.68</td>
+<td align="right">17.85</td>
+<td align="left">▂▂▂▅▇</td>
+</tr>
+<tr class="odd">
+<td align="left">tenure_t0</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">2.89</td>
+<td align="right">4.23</td>
+<td align="right">-9.17</td>
+<td align="right">0.59</td>
+<td align="right">3.95</td>
+<td align="right">6.82</td>
+<td align="right">7.00</td>
+<td align="left">▁▂▂▃▇</td>
+</tr>
+<tr class="even">
+<td align="left">tenure_t1</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">6.89</td>
+<td align="right">4.23</td>
+<td align="right">-5.17</td>
+<td align="right">4.59</td>
+<td align="right">7.95</td>
+<td align="right">10.82</td>
+<td align="right">11.00</td>
+<td align="left">▁▂▂▃▇</td>
+</tr>
+<tr class="odd">
+<td align="left">tenure_t2</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="right">10.89</td>
+<td align="right">4.23</td>
+<td align="right">-1.17</td>
+<td align="right">8.59</td>
+<td align="right">11.95</td>
+<td align="right">14.82</td>
+<td align="right">15.00</td>
+<td align="left">▁▂▂▃▇</td>
+</tr>
+<tr class="even">
+<td align="left">woman</td>
+<td align="right">663</td>
+<td align="right">0.88</td>
+<td align="right">0.31</td>
+<td align="right">0.46</td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+<td align="right">1.00</td>
+<td align="right">1.00</td>
+<td align="left">▇▁▁▁▃</td>
+</tr>
+</tbody>
+</table>
+<p><span style="color:blue">so t0 is missing 1250 values, gender is missing 663, but exit data is missing the most with 4738 values.</span></p>
+<p><span style="color:blue">Replace missing vales with random gender.</span></p>
+<pre class="r"><code>attach(New_df)
+table(gender)</code></pre>
+<pre><code>## gender
+## female   male 
+##   1548   3438</code></pre>
+<pre class="r"><code># 3438 men and 1548 women. So there are 0.69 propration of woman and 0.31 of men.</code></pre>
+<pre class="r"><code># Replace all missing values at propotional rate
+y = sum(is.na(gender))
+New_df$gender[is.na(New_df$gender)] &lt;- sample(c(&#39;male&#39;,&#39;female&#39;),  prob=c(0.69, 0.31),y, replace = TRUE)
+
+# Drop null values in t2
+#New_df &lt;- New_df[is.na(New_df$t2_state),] 
+New_df = New_df[!(is.na(New_df$t2_state)| New_df$t2_state==&quot;&quot;),]
+
+# Drop New hires in t2
+New_df&lt;-New_df[New_df$t2_state!=&quot;New hire&quot;,]</code></pre>
+<p><span style="color:blue">Creating an quadratic discriminat regression</span> <span style="color:blue">We only have three values in t2_state. Junior, Senior and Exit.</span></p>
 </div>
 
 

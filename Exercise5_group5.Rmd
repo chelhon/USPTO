@@ -1,6 +1,6 @@
 ---
 title: "Exercise5_group5"
-author: "Chelsea"
+author: "Chelsea, Matthew"
 date: "2/14/2022"
 output:
   html_document: default
@@ -438,4 +438,99 @@ summary_men <- summary_men %>%
 summary_men
 ```
 
+
+## Regression to predict attrition
+```{r}
+# Collect Data for gender from Applications Dataset
+Test_df = applications[ , c('patex_id', 'gender')]
+View(Test_df)
+
+# Find only distinct values
+Test_df = (distinct(Test_df))
+
+# 5,649 values. Equal to the transitions dataset
+# Merge dataset to transitions dataset
+
+# merge two data frames by ID
+New_df <- merge(transitions,Test_df,by="patex_id")
+View(New_df)
+
+# Count null values
+skim(New_df)
+```
+<span style="color:blue">so t0 is missing 1250 values, gender is missing 663, but exit data is missing the most with 4738 values.</span>
+
+<span style="color:blue">Replace missing vales with random gender.</span>
+```{r}
+attach(New_df)
+table(gender)
+# 3438 men and 1548 women. So there are 0.69 propration of woman and 0.31 of men.
+```
+
+```{r}
+# Replace all missing values at propotional rate
+y = sum(is.na(gender))
+New_df$gender[is.na(New_df$gender)] <- sample(c('male','female'),  prob=c(0.69, 0.31),y, replace = TRUE)
+
+# Drop null values in t2
+#New_df <- New_df[is.na(New_df$t2_state),] 
+New_df = New_df[!(is.na(New_df$t2_state)| New_df$t2_state==""),]
+
+# Drop New hires in t2
+New_df<-New_df[New_df$t2_state!="New hire",]
+```
+
+
+<span style="color:blue">Creating an quadratic discriminat regression</span>
+<span style="color:blue">We only have three values in t2_state. Junior, Senior and Exit.</span>
+```{r}
+library('fastDummies')
+New_df <- dummy_cols(New_df, select_columns = 'gender')
+attach(New_df)
+
+library(MASS)
+myqda = qda(t2_state~gender_male+tenure_t2+tenure_t1+tenure_t0)
+```
+
+<span style="color:blue">Creating an quadratic discriminat regression.</span>
+```{r}
+# Creating a numerical variable for attrition 
+New_df$t2_state[New_df$t2_state=="Exit"]=1
+New_df$t2_state[New_df$t2_state=="Junior"]=0
+New_df$t2_state[New_df$t2_state=="Senior"]=0
+
+t2_state=as.factor(t2_state)
+attach(New_df)
+table(t2_state)
+```
+
+```{r}
+# First Dirty Model
+search()
+logit=glm(t2_state ~ gender_male+tenure_t2, family = "binomial",data = New_df) 
+summary(logit)
+```
+
+```{r}
+# Predictions for male and female attrition
+b0=coef(logit)[1]
+b1=coef(logit)[2]
+b2=coef(logit)[3]
+```
+
+```{r}
+sex = 1 # Male
+ten = 10 # Ten years
+m=exp(b0+b1*1+b2*10)
+prob = m/(1+m)
+```
+<span style="color:blue">8% Chance this guy quits.</span>
+
+```{r}
+sex = 0 # female
+ten = 2 # Two years
+m=exp(b0+b1*0+b2*2)
+prob = m/(1+m)
+```
+<span style="color:blue">22% chance she will quit.</span>
 
