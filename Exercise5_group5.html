@@ -310,6 +310,47 @@ examiner_tenure &lt;- applications %&gt;%
 examiner_tenure %&gt;% 
   select(onboard_date,exit_date,tenure) %&gt;% 
   skim()</code></pre>
+<table>
+<caption>Data summary</caption>
+<tbody>
+<tr class="odd">
+<td align="left">Name</td>
+<td align="left">Piped data</td>
+</tr>
+<tr class="even">
+<td align="left">Number of rows</td>
+<td align="left">5649</td>
+</tr>
+<tr class="odd">
+<td align="left">Number of columns</td>
+<td align="left">3</td>
+</tr>
+<tr class="even">
+<td align="left">_______________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Column type frequency:</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">Date</td>
+<td align="left">2</td>
+</tr>
+<tr class="odd">
+<td align="left">numeric</td>
+<td align="left">1</td>
+</tr>
+<tr class="even">
+<td align="left">________________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Group variables</td>
+<td align="left">None</td>
+</tr>
+</tbody>
+</table>
 <p><strong>Variable type: Date</strong></p>
 <table>
 <thead>
@@ -400,6 +441,47 @@ examiner_tenure &lt;- examiner_tenure %&gt;%
 examiner_tenure %&gt;% 
   select(onboard_date,exit_date,tenure) %&gt;% 
   skim()</code></pre>
+<table>
+<caption>Data summary</caption>
+<tbody>
+<tr class="odd">
+<td align="left">Name</td>
+<td align="left">Piped data</td>
+</tr>
+<tr class="even">
+<td align="left">Number of rows</td>
+<td align="left">5649</td>
+</tr>
+<tr class="odd">
+<td align="left">Number of columns</td>
+<td align="left">3</td>
+</tr>
+<tr class="even">
+<td align="left">_______________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Column type frequency:</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">Date</td>
+<td align="left">2</td>
+</tr>
+<tr class="odd">
+<td align="left">numeric</td>
+<td align="left">1</td>
+</tr>
+<tr class="even">
+<td align="left">________________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Group variables</td>
+<td align="left">None</td>
+</tr>
+</tbody>
+</table>
 <p><strong>Variable type: Date</strong></p>
 <table>
 <thead>
@@ -518,6 +600,9 @@ head(transitions_seniority,10)</code></pre>
 ## 59056 Senior   Senior   Senior
 ## 59074 Senior   Senior   Senior
 ## 59081   &lt;NA&gt;     &lt;NA&gt; New hire</code></pre>
+</div>
+<div id="transitions-matrix---general" class="section level3">
+<h3>Transitions matrix - general</h3>
 <p><span style="color:blue">We can use the following function to compute the overall seniority transition matrix by calculating the transition combinations from one state to another as share of previous period. The horizontal columns refer to the status before and the vertical rownames refer to the status after </span></p>
 <pre class="r"><code># Function to compute first-order Markov transition matrix 
 trans.matrix &lt;- function(X)
@@ -528,8 +613,8 @@ trans.matrix &lt;- function(X)
 }
 
 # Function to reorder matrix to logical employment journey
+order &lt;- c(&quot;Junior&quot;, &quot;Senior&quot;, &quot;Exit&quot;)
 trans.reorder &lt;- function(X){
-  order &lt;- c(&quot;Junior&quot;, &quot;Senior&quot;, &quot;Exit&quot;)
   X &lt;- X %&gt;%
   slice(match(order, rownames(X)))
   #X &lt;- X[,order]
@@ -547,6 +632,9 @@ trans_matrix_all</code></pre>
 ## Senior 0.6258 0.9368    0
 ## Exit   0.1185 0.0632    1</code></pre>
 <pre class="r"><code>rm(transitions_seniority)</code></pre>
+</div>
+<div id="transitions-matrix---women" class="section level3">
+<h3>Transitions matrix - women</h3>
 <p><span style="color:blue">Repeat the matrix generation for women.</span></p>
 <pre class="r"><code># First to look up gender from applications
 id_gender &lt;- unique(select(applications,c(&quot;patex_id&quot;,&quot;woman&quot;)))
@@ -560,19 +648,9 @@ transitions_seniority_women &lt;- as.data.frame(select(transitions_seniority_wom
 names(transitions_seniority_women) &lt;- c(&quot;patex_id&quot;,&quot;t0&quot;,&quot;t1&quot;,&quot;t2&quot;)
 rownames(transitions_seniority_women) &lt;- transitions_seniority_women$patex_id
 transitions_seniority_women &lt;- select(transitions_seniority_women,-c(&quot;patex_id&quot;))
-head(transitions_seniority_women,10)</code></pre>
-<pre><code>##           t0       t1       t2
-## 59040   &lt;NA&gt; New hire   Senior
-## 59086   &lt;NA&gt; New hire   Junior
-## 59141 Junior   Senior   Senior
-## 59156 Senior   Senior   Senior
-## 59165 Junior     Exit     &lt;NA&gt;
-## 59171   &lt;NA&gt;     &lt;NA&gt; New hire
-## 59181 Senior   Senior   Senior
-## 59227 Senior   Senior   Senior
-## 59236 Senior   Senior   Senior
-## 59273 Senior     Exit     &lt;NA&gt;</code></pre>
-<pre class="r"><code># Create transition matrix (for t0 to t1, women)
+#head(transitions_seniority_women,10)
+
+# Create transition matrix (for t0 to t1, women)
 trans_matrix_table &lt;- trans.matrix(as.matrix(transitions_seniority_women[,c(1,2)]))
 trans_matrix_women &lt;- as.data.frame.matrix(trans_matrix_table) 
 trans_matrix_women &lt;- trans.reorder(trans_matrix_women)
@@ -582,6 +660,9 @@ trans_matrix_women</code></pre>
 ## Senior 0.6388 0.9371    0
 ## Exit   0.1136 0.0629    1</code></pre>
 <pre class="r"><code>rm(transitions_seniority_women)</code></pre>
+</div>
+<div id="transitions-matrix---men" class="section level3">
+<h3>Transitions matrix - men</h3>
 <p><span style="color:blue">Repeat the matrix generation for men this time.</span></p>
 <pre class="r"><code># Similarly, spread dates into columns and keep each row per examiner corresponding to a single run of Markov chain
 transitions_seniority_men &lt;- filter(transitions, woman==0)
@@ -590,19 +671,9 @@ transitions_seniority_men &lt;- as.data.frame(select(transitions_seniority_men,c
 names(transitions_seniority_men) &lt;- c(&quot;patex_id&quot;,&quot;t0&quot;,&quot;t1&quot;,&quot;t2&quot;)
 rownames(transitions_seniority_men) &lt;- transitions_seniority_men$patex_id
 transitions_seniority_men &lt;- select(transitions_seniority_men,-c(&quot;patex_id&quot;))
-head(transitions_seniority_men,10)</code></pre>
-<pre><code>##           t0       t1       t2
-## 59012 Junior   Senior   Senior
-## 59025   &lt;NA&gt; New hire   Junior
-## 59052 Junior     Exit     &lt;NA&gt;
-## 59055 Junior     Exit     &lt;NA&gt;
-## 59056 Senior   Senior   Senior
-## 59081   &lt;NA&gt;     &lt;NA&gt; New hire
-## 59096 Senior   Senior   Senior
-## 59117   &lt;NA&gt; New hire     Exit
-## 59122 Junior   Senior   Senior
-## 59125   &lt;NA&gt; New hire   Junior</code></pre>
-<pre class="r"><code># Create transition matrix (for t0 to t1, women)
+#head(transitions_seniority_men,10)
+
+# Create transition matrix (for t0 to t1, women)
 trans_matrix_table &lt;- trans.matrix(as.matrix(transitions_seniority_men[,c(1,2)]))
 trans_matrix_men &lt;- as.data.frame.matrix(trans_matrix_table) 
 trans_matrix_men &lt;- trans.reorder(trans_matrix_men)
@@ -612,125 +683,206 @@ trans_matrix_men</code></pre>
 ## Senior 0.6190 0.9348    0
 ## Exit   0.1243 0.0652    1</code></pre>
 <pre class="r"><code>rm(transitions_seniority_men)</code></pre>
-<p><span style="color:red">========================</span></p>
-<p>Now that we’ve identified an individual’s state at <span class="math inline">\(t_0\)</span>, <span class="math inline">\(t_1\)</span> and <span class="math inline">\(t_2\)</span>, we can calculate transitions from one state to another as shares of the two initial categories (Junior and Senior at <span class="math inline">\(t_0\)</span>).</p>
-<p>Note that some examiners have negative tenure at our chosen time points, which means they have not been hired yet. We should be careful with how to count them!</p>
-<pre class="r"><code>transitions %&gt;% 
-  count(t0_state, t1_state, name = &quot;cell&quot;) %&gt;%  # get counts by permutation
-  group_by(t0_state) %&gt;% # make sure the sum() statement below refers to each t_0 state
-  mutate(
-    rate = cell/sum(cell) # share of t_0 category total that&#39;s in the current t_1 state
-    ) %&gt;% 
-  ungroup()</code></pre>
-<pre><code>## # A tibble: 8 × 4
-##   t0_state t1_state  cell   rate
-##   &lt;chr&gt;    &lt;chr&gt;    &lt;int&gt;  &lt;dbl&gt;
-## 1 Junior   Exit       285 0.119 
-## 2 Junior   Junior     615 0.256 
-## 3 Junior   Senior    1505 0.626 
-## 4 Senior   Exit       126 0.0632
-## 5 Senior   Senior    1868 0.937 
-## 6 &lt;NA&gt;     Exit         5 0.004 
-## 7 &lt;NA&gt;     New hire   646 0.517 
-## 8 &lt;NA&gt;     &lt;NA&gt;       599 0.479</code></pre>
-<p>As you can see, we’ve accounted for all possible permutations. Or did we? What’s missing here?</p>
-<p>We can now create the transition matrix:</p>
-<pre class="r"><code>tr_matrix &lt;- transitions %&gt;% 
-  count(t0_state, t1_state, name = &quot;cell&quot;) %&gt;% 
-  group_by(t0_state) %&gt;% 
-  mutate(
-    rate = cell/sum(cell)
-    ) %&gt;% 
-  ungroup() %&gt;% 
-  filter(!is.na(t0_state), t1_state %in% c(&quot;Junior&quot;,&quot;Senior&quot;)) %&gt;% 
-  select(
-    from_state = t0_state, 
-    to_state = t1_state, 
-    rate
-    )
-
-tr_matrix</code></pre>
-<pre><code>## # A tibble: 3 × 3
-##   from_state to_state  rate
-##   &lt;chr&gt;      &lt;chr&gt;    &lt;dbl&gt;
-## 1 Junior     Junior   0.256
-## 2 Junior     Senior   0.626
-## 3 Senior     Senior   0.937</code></pre>
 </div>
 </div>
-<div id="predition-for-t_2" class="section level2">
-<h2>Predition for <span class="math inline">\(t_2\)</span></h2>
-<p>Let’s count actual cells for <span class="math inline">\(t_2\)</span>.</p>
-<pre class="r"><code>transitions &lt;- transitions %&gt;% 
-  mutate(
-    tenure_t2 = as.duration(onboard_date %--% ymd(&quot;2015-01-01&quot;)) / dyears(1),
-    t2_state = case_when(
-      exit_date&lt;ymd(&quot;2015-01-01&quot;) &amp;
-       exit_date&gt;ymd(&quot;2011-01-01&quot;)       ~ &quot;Exit&quot;,
-      onboard_date&gt;=ymd(&quot;2011-01-01&quot;) 
-        &amp; onboard_date&lt;ymd(&quot;2015-01-01&quot;) ~ &quot;New hire&quot;,
-      tenure_t2&lt;6 &amp; tenure_t2&gt;0          ~ &quot;Junior&quot;  , # Jr; not those yet to be hired!
-      tenure_t2&gt;=6                       ~ &quot;Senior&quot;  , # Sr
-      TRUE                               ~ NA_character_ # not yet hired
-      )
-    )
-
-t1_counts &lt;- transitions %&gt;% 
+<div id="prediction-for-t_2---general" class="section level2">
+<h2>Prediction for <span class="math inline">\(t_2\)</span> - general</h2>
+<p><span style="color:blue">Now that all 3 matrices are ready. Let’s count actual cells for <span class="math inline">\(t_1\)</span>.</span></p>
+<pre class="r"><code>t1_counts &lt;- transitions %&gt;% 
   count(t1_state, name = &quot;t1_count&quot;) %&gt;% 
-  filter(t1_state %in% c(&quot;Junior&quot;,&quot;Senior&quot;)) %&gt;% 
+  filter(t1_state %in% c(&quot;Junior&quot;,&quot;Senior&quot;,&quot;Exit&quot;)) %&gt;% 
   rename(from_state = t1_state) %&gt;% 
-  left_join(tr_matrix) %&gt;% 
-  relocate(from_state, to_state) %&gt;%  # move the column to be the first one, for readability
-  mutate(pred_t2 = round(t1_count*rate))</code></pre>
-<pre><code>## Joining, by = &quot;from_state&quot;</code></pre>
-<pre class="r"><code>t1_counts</code></pre>
-<pre><code>## # A tibble: 3 × 5
-##   from_state to_state t1_count  rate pred_t2
-##   &lt;chr&gt;      &lt;chr&gt;       &lt;int&gt; &lt;dbl&gt;   &lt;dbl&gt;
-## 1 Junior     Junior        615 0.256     157
-## 2 Junior     Senior        615 0.626     385
-## 3 Senior     Senior       3373 0.937    3160</code></pre>
-<p>Compare with actual:</p>
-<pre class="r"><code>t1_counts %&gt;% 
-  group_by(to_state) %&gt;% 
-  tally(pred_t2)</code></pre>
-<pre><code>## # A tibble: 2 × 2
-##   to_state     n
-##   &lt;chr&gt;    &lt;dbl&gt;
-## 1 Junior     157
-## 2 Senior    3545</code></pre>
-<pre class="r"><code>transitions %&gt;% 
-  count(t2_state)</code></pre>
-<pre><code>## # A tibble: 5 × 2
-##   t2_state     n
-##   &lt;chr&gt;    &lt;int&gt;
-## 1 Exit       355
-## 2 Junior     275
-## 3 New hire   524
-## 4 Senior    4451
-## 5 &lt;NA&gt;        44</code></pre>
-<p>Another way to compare is to calculate a transition matrix for <span class="math inline">\(t_1 \rightarrow t_2\)</span> change.</p>
-<pre class="r"><code>transitions %&gt;% 
-  count(t1_state, t2_state, name = &quot;cell&quot;) %&gt;%  # get counts by permutation
-  group_by(t1_state) %&gt;% # make sure the sum() statement below refers to each t_1 state
+  slice(match(order, from_state))
+
+t1_counts &lt;- as.data.frame(t1_counts)
+rownames(t1_counts) &lt;- t1_counts$from_state
+t1_counts &lt;- select(t1_counts,-c(&quot;from_state&quot;))
+
+summary_all &lt;- t1_counts
+summary_all</code></pre>
+<pre><code>##        t1_count
+## Junior      615
+## Senior     3373
+## Exit        416</code></pre>
+<pre class="r"><code>rm(t1_counts)</code></pre>
+<p><span style="color:blue">Make prediction for <span class="math inline">\(t_2\)</span>.</span></p>
+<pre class="r"><code>mmult &lt;- as.matrix(trans_matrix_all) %*% as.matrix(summary_all)
+
+summary_all &lt;- summary_all %&gt;%
   mutate(
-    rate = cell/sum(cell) # share of t_0 category total that&#39;s in the current t_2 state
-    ) %&gt;% 
-  ungroup()</code></pre>
-<pre><code>## # A tibble: 11 × 4
-##    t1_state t2_state  cell   rate
-##    &lt;chr&gt;    &lt;chr&gt;    &lt;int&gt;  &lt;dbl&gt;
-##  1 Exit     Senior     416 1     
-##  2 Junior   Exit        56 0.0911
-##  3 Junior   Senior     559 0.909 
-##  4 New hire Exit        84 0.130 
-##  5 New hire Junior     275 0.426 
-##  6 New hire Senior     287 0.444 
-##  7 Senior   Exit       184 0.0546
-##  8 Senior   Senior    3189 0.945 
-##  9 &lt;NA&gt;     Exit        31 0.0518
-## 10 &lt;NA&gt;     New hire   524 0.875 
-## 11 &lt;NA&gt;     &lt;NA&gt;        44 0.0735</code></pre>
+    t2_pred = unlist(lapply(seq_len(ncol(mmult)), function(i) mmult[,i]))
+  ) 
+summary_all</code></pre>
+<pre><code>##        t1_count   t2_pred
+## Junior      615  157.2555
+## Senior     3373 3544.6934
+## Exit        416  702.0511</code></pre>
+<p><span style="color:blue">Count the actual cells for <span class="math inline">\(t_2\)</span>.</span></p>
+<pre class="r"><code>t2_counts &lt;- transitions %&gt;% 
+  count(t2_state, name = &quot;t2_count&quot;) %&gt;% 
+  filter(t2_state %in% c(&quot;Junior&quot;,&quot;Senior&quot;,&quot;Exit&quot;)) %&gt;% 
+  rename(from_state = t2_state) %&gt;% 
+  slice(match(order, from_state))
+
+t2_counts &lt;- as.data.frame(t2_counts)
+rownames(t2_counts) &lt;- t2_counts$from_state
+t2_counts &lt;- select(t2_counts,-c(&quot;from_state&quot;))
+t2_counts</code></pre>
+<pre><code>##        t2_count
+## Junior      275
+## Senior     4035
+## Exit        355</code></pre>
+<pre class="r"><code>summary_all &lt;- cbind(summary_all, t2_counts)
+summary_all</code></pre>
+<pre><code>##        t1_count   t2_pred t2_count
+## Junior      615  157.2555      275
+## Senior     3373 3544.6934     4035
+## Exit        416  702.0511      355</code></pre>
+<pre class="r"><code>rm(t2_counts)</code></pre>
+<p><span style="color:blue">Calculate the % difference.</span></p>
+<pre class="r"><code>summary_all &lt;- summary_all %&gt;%
+  mutate(
+    percent_diff = (t2_pred - t2_count)/t2_count
+  ) 
+summary_all</code></pre>
+<pre><code>##        t1_count   t2_pred t2_count percent_diff
+## Junior      615  157.2555      275   -0.4281618
+## Senior     3373 3544.6934     4035   -0.1215134
+## Exit        416  702.0511      355    0.9776087</code></pre>
+</div>
+<div id="prediction-for-t_2---women" class="section level2">
+<h2>Prediction for <span class="math inline">\(t_2\)</span> - women</h2>
+<p><span style="color:blue">Zooming into women, let’s count actual cells for <span class="math inline">\(t_1\)</span>.</span></p>
+<pre class="r"><code>t1_counts &lt;- transitions %&gt;% 
+  filter(woman==1) %&gt;%
+  count(t1_state, name = &quot;t1_count&quot;) %&gt;% 
+  filter(t1_state %in% c(&quot;Junior&quot;,&quot;Senior&quot;,&quot;Exit&quot;)) %&gt;% 
+  rename(from_state = t1_state) %&gt;% 
+  slice(match(order, from_state))
+
+t1_counts &lt;- as.data.frame(t1_counts)
+rownames(t1_counts) &lt;- t1_counts$from_state
+t1_counts &lt;- select(t1_counts,-c(&quot;from_state&quot;))
+
+summary_women &lt;- t1_counts
+summary_women</code></pre>
+<pre><code>##        t1_count
+## Junior      157
+## Senior      986
+## Exit        111</code></pre>
+<pre class="r"><code>rm(t1_counts)</code></pre>
+<p><span style="color:blue">Make prediction for <span class="math inline">\(t_2\)</span>.</span></p>
+<pre class="r"><code>mmult &lt;- as.matrix(trans_matrix_women) %*% as.matrix(summary_women)
+
+summary_women &lt;- summary_women %&gt;%
+  mutate(
+    t2_pred = unlist(lapply(seq_len(ncol(mmult)), function(i) mmult[,i]))
+  ) 
+summary_women</code></pre>
+<pre><code>##        t1_count   t2_pred
+## Junior      157   38.8732
+## Senior      986 1024.2722
+## Exit        111  190.8546</code></pre>
+<p><span style="color:blue">Count the actual cells for <span class="math inline">\(t_2\)</span>.</span></p>
+<pre class="r"><code>t2_counts &lt;- transitions %&gt;% 
+  filter(woman==1) %&gt;%
+  count(t2_state, name = &quot;t2_count&quot;) %&gt;% 
+  filter(t2_state %in% c(&quot;Junior&quot;,&quot;Senior&quot;,&quot;Exit&quot;)) %&gt;% 
+  rename(from_state = t2_state) %&gt;% 
+  slice(match(order, from_state))
+
+t2_counts &lt;- as.data.frame(t2_counts)
+rownames(t2_counts) &lt;- t2_counts$from_state
+t2_counts &lt;- select(t2_counts,-c(&quot;from_state&quot;))
+t2_counts</code></pre>
+<pre><code>##        t2_count
+## Junior       69
+## Senior     1150
+## Exit         93</code></pre>
+<pre class="r"><code>summary_women &lt;- cbind(summary_women, t2_counts)
+summary_women</code></pre>
+<pre><code>##        t1_count   t2_pred t2_count
+## Junior      157   38.8732       69
+## Senior      986 1024.2722     1150
+## Exit        111  190.8546       93</code></pre>
+<pre class="r"><code>rm(t2_counts)</code></pre>
+<p><span style="color:blue">Calculate the % difference.</span></p>
+<pre class="r"><code>summary_women &lt;- summary_women %&gt;%
+  mutate(
+    percent_diff = (t2_pred - t2_count)/t2_count
+  ) 
+summary_women</code></pre>
+<pre><code>##        t1_count   t2_pred t2_count percent_diff
+## Junior      157   38.8732       69   -0.4366203
+## Senior      986 1024.2722     1150   -0.1093285
+## Exit        111  190.8546       93    1.0522000</code></pre>
+</div>
+<div id="prediction-for-t_2---men" class="section level2">
+<h2>Prediction for <span class="math inline">\(t_2\)</span> - men</h2>
+<p><span style="color:blue">Zooming into women, let’s count actual cells for <span class="math inline">\(t_1\)</span>.</span></p>
+<pre class="r"><code>t1_counts &lt;- transitions %&gt;% 
+  filter(woman==0) %&gt;%
+  count(t1_state, name = &quot;t1_count&quot;) %&gt;% 
+  filter(t1_state %in% c(&quot;Junior&quot;,&quot;Senior&quot;,&quot;Exit&quot;)) %&gt;% 
+  rename(from_state = t1_state) %&gt;% 
+  slice(match(order, from_state))
+
+t1_counts &lt;- as.data.frame(t1_counts)
+rownames(t1_counts) &lt;- t1_counts$from_state
+t1_counts &lt;- select(t1_counts,-c(&quot;from_state&quot;))
+
+summary_men &lt;- t1_counts
+summary_men</code></pre>
+<pre><code>##        t1_count
+## Junior      384
+## Senior     2015
+## Exit        266</code></pre>
+<pre class="r"><code>rm(t1_counts)</code></pre>
+<p><span style="color:blue">Make prediction for <span class="math inline">\(t_2\)</span>.</span></p>
+<pre class="r"><code>mmult &lt;- as.matrix(trans_matrix_men) %*% as.matrix(summary_men)
+
+summary_men &lt;- summary_men %&gt;%
+  mutate(
+    t2_pred = unlist(lapply(seq_len(ncol(mmult)), function(i) mmult[,i]))
+  ) 
+summary_men</code></pre>
+<pre><code>##        t1_count   t2_pred
+## Junior      384   98.5728
+## Senior     2015 2121.3180
+## Exit        266  445.1092</code></pre>
+<p><span style="color:blue">Count the actual cells for <span class="math inline">\(t_2\)</span>.</span></p>
+<pre class="r"><code>t2_counts &lt;- transitions %&gt;% 
+  filter(woman==0) %&gt;%
+  count(t2_state, name = &quot;t2_count&quot;) %&gt;% 
+  filter(t2_state %in% c(&quot;Junior&quot;,&quot;Senior&quot;,&quot;Exit&quot;)) %&gt;% 
+  rename(from_state = t2_state) %&gt;% 
+  slice(match(order, from_state))
+
+t2_counts &lt;- as.data.frame(t2_counts)
+rownames(t2_counts) &lt;- t2_counts$from_state
+t2_counts &lt;- select(t2_counts,-c(&quot;from_state&quot;))
+t2_counts</code></pre>
+<pre><code>##        t2_count
+## Junior      163
+## Senior     2425
+## Exit        231</code></pre>
+<pre class="r"><code>summary_men &lt;- cbind(summary_men, t2_counts)
+summary_men</code></pre>
+<pre><code>##        t1_count   t2_pred t2_count
+## Junior      384   98.5728      163
+## Senior     2015 2121.3180     2425
+## Exit        266  445.1092      231</code></pre>
+<pre class="r"><code>rm(t2_counts)</code></pre>
+<p><span style="color:blue">Calculate the % difference.</span></p>
+<pre class="r"><code>summary_men &lt;- summary_men %&gt;%
+  mutate(
+    percent_diff = (t2_pred - t2_count)/t2_count
+  ) 
+summary_men</code></pre>
+<pre><code>##        t1_count   t2_pred t2_count percent_diff
+## Junior      384   98.5728      163   -0.3952589
+## Senior     2015 2121.3180     2425   -0.1252297
+## Exit        266  445.1092      231    0.9268797</code></pre>
 </div>
 
 
