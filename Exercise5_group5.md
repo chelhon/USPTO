@@ -189,11 +189,12 @@ Data summary
 
 Let’s assume a time period for our transition matrix of
 *t*<sub>0</sub> = 2007 (the year we first get senior examiners,
-according to our definition) and *t*<sub>1</sub> = 2011 (about a
-mid-point in our time window). For each of the years, we need a vector
-of indicators: + examiner is junior + examiner is senior + examiner is a
-new hire <span style="color:blue">during this period </span> + examiner
-exited <span style="color:blue">during this period </span>
+according to our definition), *t*<sub>1</sub> = 2011 (about a mid-point
+in our time window) for the projection of *t*<sub>2</sub> = 2015. For
+each of the years, we need a vector of indicators: + examiner is junior
++ examiner is senior + examiner is a new hire <span
+style="color:blue">during this period </span> + examiner exited <span
+style="color:blue">during this period </span>
 
 <span style="color:blue">Note that examiners who have already exit in
 previous periods will have state NA subsequently.</span>
@@ -298,6 +299,10 @@ trans_matrix_all
 rm(transitions_seniority)
 ```
 
+Comparing junior and senior, it is observed that junior has a higher
+exit rate of 11.9% than senior 6.3%. Next, we will further drill into
+the impact of gender on promotion and retention.
+
 ### Transitions matrix - women
 
 <span style="color:blue">Repeat the matrix generation for women.</span>
@@ -363,6 +368,11 @@ trans_matrix_men
 ``` r
 rm(transitions_seniority_men)
 ```
+
+Comparing women and men, it is observed that promotion rate (from junior
+to senior) is higher in women (63.9%) than in men (61.9%) and attrition
+rate (both from junior to exit and senior to exit) is lower in women
+(11.4%; 6.3%) than in men (12.4%; 6.5%).
 
 ## Prediction for *t*<sub>2</sub> - general
 
@@ -880,25 +890,10 @@ plot+line
 b0=coef(logit)[1]
 b1=coef(logit)[2]
 b2=coef(logit)[3]
-b0
 ```
 
-    ## (Intercept) 
-    ##  -0.9432836
-
-``` r
-b1
-```
-
-    ## gender_male 
-    ##   0.1136206
-
-``` r
-b2
-```
-
-    ##  tenure_t2 
-    ## -0.1463734
+Let’s look into the attrition of junior and senior, as well as women and
+men
 
 ``` r
 sex = 0 # female
@@ -911,7 +906,7 @@ prob
     ## (Intercept) 
     ##   0.2516829
 
-<span style="color:blue">24.7% Chance this junior woman quits.</span>
+<span style="color:blue">25.7% Chance this junior woman quits.</span>
 
 ``` r
 sex = 1 # male
@@ -924,7 +919,7 @@ prob
     ## (Intercept) 
     ##   0.2736789
 
-<span style="color:blue">27.5% Chance this junior man quits.</span>
+<span style="color:blue">27.2% Chance this junior man quits.</span>
 
 ``` r
 sex = 0 # Female
@@ -950,7 +945,11 @@ prob
     ## (Intercept) 
     ##  0.09167127
 
-<span style="color:blue">9.2% chance this senior man will quit.</span>
+<span style="color:blue">9.1% chance this senior man will quit.</span>
+
+The above aligns with our transition matrices that junior have a higher
+attrition rate than senior and women have a lower attrition rate than
+men.
 
 <span style="color:blue">Appendix: more exploratory work</span>
 
